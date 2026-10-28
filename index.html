@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Outbreak Tracer</title>
+<style>
+:root{--bg:#f6f9fd;--fg:#1b2433;--mut:#5d6b82;--card:#fff;--bd:#d3dcea;--acc:#2563eb;--inf:#d9480f;--infbg:#ffe9dc;--ok:#2b8a3e;--okbg:#e2f5e7;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:clamp(17px,1.45vw,30px)/1.4 "Trebuchet MS","Segoe UI",system-ui,sans-serif}
+body.teacher{font-size:16px}
+body.teacher .top,body.teacher #board{display:none}
+.top{display:flex;justify-content:space-between;align-items:center;padding:4px 20px;background:var(--acc);color:#fff}
+.brand{font:700 1.05em Georgia,serif}
+.top .ghost{color:#dbe7ff}.top .ghost:hover{color:#fff;background:#ffffff30}
+main{padding:12px 22px 18px}
+h2{font:700 1.15em/1.3 Georgia,serif;margin:12px 0 6px}
+.big{font-size:1.8em;margin:0}
+p{margin:4px 0}.mut{color:var(--mut)}
+button,select,input,textarea{font:inherit;color:inherit}
+button{background:var(--card);border:2px solid var(--bd);border-radius:10px;padding:.3em .9em;cursor:pointer}
+button:hover{border-color:var(--acc)}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+button.pri{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:700}
+button.ghost{border-color:transparent;background:none;color:var(--mut);padding:2px 10px;font-size:.8em}
+button.ghost:hover{color:var(--fg);background:var(--infbg)}
+button:disabled{opacity:.4;cursor:default}
+textarea,input[type=number],select,input[type=text]{background:var(--card);border:2px solid var(--bd);border-radius:10px;padding:6px 8px;width:100%}
+textarea{height:210px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.field{margin:10px 0}.field label{display:block;font-weight:700;margin-bottom:4px}
+.panel{background:var(--card);border:2px solid var(--bd);border-radius:12px;padding:10px 14px;margin:8px 0}
+.steps{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px}
+.steps button{border-color:var(--acc);color:var(--acc);font-weight:700;padding:3px 12px;font-size:.9em}
+.steps button.on{background:var(--acc);color:#fff}
+.prog{height:8px;border-radius:99px;background:var(--bd);overflow:hidden;margin:0 0 10px}.prog i{display:block;height:100%;background:var(--acc)}
+.hero{min-height:65vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.hero .t{font:700 3.2em/1.1 Georgia,serif}.hero p{font-size:1.3em;color:var(--mut)}
+.pairs{display:grid;grid-template-columns:repeat(auto-fit,minmax(14em,1fr));gap:.5em;margin-top:.5em}
+.pair{background:var(--card);border:2px solid var(--bd);border-left:.3em solid var(--acc);border-radius:12px;padding:.35em .6em;display:flex;justify-content:center;align-items:center;gap:.5em;font-weight:700}
+.arr{color:var(--acc)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
+.st{padding:8px 4px;font-size:.95em;font-weight:700;border-color:var(--ok);background:var(--okbg)}
+.st.inf{background:var(--infbg);border-color:var(--inf)}
+.pill{display:inline-block;padding:0 .6em;border-radius:999px;font-weight:700;border:2px solid var(--ok);background:var(--okbg);color:var(--fg);white-space:nowrap;font-size:inherit}
+.pill.i{background:var(--inf);border-color:var(--inf);color:#fff}
+.bigpill{font-size:1.5em;padding:.25em 1em;margin:.3em}
+.sum{display:flex;gap:14px;align-items:center;margin:2px 0 8px}.sum b{font-size:1.3em;white-space:nowrap}
+.bar{flex:1;height:1em;border-radius:999px;background:var(--okbg);border:2px solid var(--ok);overflow:hidden}.bar i{display:block;height:100%;background:var(--inf)}
+.trails{font-size:max(13px,min(1.5vw,calc((100vh - 215px)/var(--rows)/1.7)))}
+.tr{display:grid;grid-template-columns:7.5em repeat(var(--n),1fr) 5.5em;align-items:center;padding:1px 6px;border-radius:8px}
+.tr:nth-child(even){background:#eaf1fc}
+.tr.sel{outline:3px solid var(--acc);background:#dbe8ff}
+.tr.th{font-weight:700}
+.cell{position:relative;text-align:center;min-height:1.7em;display:flex;align-items:center;justify-content:center;gap:4px}
+.tr:not(.th) .cell::before{content:"";position:absolute;left:0;right:0;top:50%;height:3px;background:var(--acc);opacity:.35;border-radius:2px}
+.cell .pill{position:relative;z-index:1}
+.rh{background:var(--acc);color:#fff;border-radius:8px;padding:0 .8em}
+.ri{color:var(--inf)}.rcl{color:var(--ok)}
+.tr button.pill{padding:0 .6em}
+.wrap{overflow-x:auto}svg{display:block}
+.nI{fill:var(--inf)}.nC{fill:var(--okbg);stroke:var(--ok);stroke-width:2}.nt{font:700 14px "Trebuchet MS",sans-serif;pointer-events:none}.tI{fill:#fff}.tC{fill:var(--fg)}.hd{font:700 15px "Trebuchet MS",sans-serif;fill:var(--fg)}.eg{stroke:var(--acc);stroke-width:3;opacity:.4}
+.tsv{width:100%;height:auto;max-height:calc(100vh - 230px)}
+.sus{display:grid;grid-template-columns:repeat(auto-fill,minmax(11em,1fr));gap:8px}
+.sus>div{border:2px solid var(--bd);border-left:.4em solid var(--ok);border-radius:10px;padding:6px;background:var(--card)}
+.sus>div.inf{border-left-color:var(--inf)}
+.sus .out button{text-decoration:line-through;opacity:.45}
+.sus input{margin-top:5px;padding:3px 8px;font-size:.8em}
+.msg{font-weight:700;margin:6px 0}
+#ctl{position:fixed;top:50px;right:12px;width:400px;min-width:280px;max-width:95vw;max-height:85vh;overflow:auto;resize:both;background:var(--bg);border:3px solid var(--acc);border-radius:12px;padding:10px 12px;z-index:5;font-size:15px;box-shadow:0 6px 24px #0003}
+#ctl .ctlh{display:flex;justify-content:space-between;align-items:center;cursor:move;touch-action:none;user-select:none;margin-bottom:4px}
+body.teacher #ctl{position:static;width:auto;max-width:880px;max-height:none;margin:0 auto;border:0;box-shadow:none;resize:none;background:none;padding:16px}
+body.teacher #ctl .ctlh{display:none}
+#ctl button.pri{padding:8px 18px;font-size:16px}
+[hidden]{display:none!important}
+</style></head>
+<body>
+<div class="top"><span class="brand">Outbreak Tracer</span><button class="ghost" id="tp" data-a="panel">Teacher panel</button></div>
+<main id="board"></main>
+<div id="ctl" hidden><div class="ctlh"><b>Teacher panel (drag to move)</b><span><button class="ghost" data-a="popout" title="Open the panel in its own window to drag onto another monitor">Pop out ⧉</button><button class="ghost" data-a="hidectl">Hide</button></span></div><div id="croot"></div></div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const parseNames=t=>[...new Set(t.split(/[\n,]+/).map(s=>s.trim()).filter(Boolean))];
+const ROLE=location.hash==='#teacher'?'teacher':'board';
+let S={},mirror=false,lastPing=0;
+let cfg={names:'Aroha\nSam\nMia\nLiam\nChloe\nNoah\nZara\nJack\nElla\nMason\nRuby\nEthan\nIsla\nLucas\nGrace\nOscar\nIvy\nLeo\nHannah\nMax\nTia\nFinn\nLayla\nBen',nr:4,p0:'r',err:''};
+
+/* ---------- sync between the board window and the teacher window ---------- */
+let BC=null;try{BC=new BroadcastChannel('outbreak-tracer')}catch(e){}
+const myId=Math.random().toString(36).slice(2),seen=new Set();let mid=0;
+function send(m){m.id=myId+'-'+(++mid);try{BC&&BC.postMessage(m)}catch(e){}try{localStorage.setItem('ot_msg',JSON.stringify(m))}catch(e){}}
+function recv(m){if(!m||!m.id||m.id.startsWith(myId)||seen.has(m.id))return;seen.add(m.id);handle(m)}
+if(BC)BC.onmessage=e=>recv(e.data);
+addEventListener('storage',e=>{if(e.key==='ot_msg'&&e.newValue){try{recv(JSON.parse(e.newValue))}catch(x){}}});
+const ser=()=>S.rounds?{...S,fin:S.fin?[...S.fin]:null,draft:[...S.draft],out:[...S.out]}:{};
+const deser=o=>o.rounds?{...o,fin:o.fin?new Set(o.fin):null,draft:new Set(o.draft),out:new Set(o.out)}:{};
+function sync(){send({type:'state',s:ser()});try{localStorage.setItem('ot_save',JSON.stringify({t:Date.now(),s:ser(),cfg}))}catch(e){}}
+function handle(m){
+if(ROLE==='board'){if(m.type==='bye'){mirror=false;$('#tp').hidden=false;return}if(m.type==='state'){S=deser(m.s);mirror=true;$('#tp').hidden=true;$('#ctl').hidden=true;rBoard()}else if(m.type==='hello')send({type:'ping'});return}
+if(m.type==='hello'){lastPing=Date.now();sync()}else if(m.type==='ping')lastPing=Date.now();if(m.type==='hello'||m.type==='ping'){const c=$('#conn');if(c)c.textContent=connTxt()}
+else if(m.type==='act'&&H[m.a])H[m.a](m.v);else if(m.type==='note'&&S.notes)S.notes[m.i]=m.val}
+
+/* ---------- logic ---------- */
+const shuf=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const prs=g=>{const o=[];for(let i=0;i<g.length;i++)for(let j=i+1;j<g.length;j++)o.push([Math.min(g[i],g[j]),Math.max(g[i],g[j])]);return o};
+function mk(n,met){let best,bs=1e9;for(let t=0;t<150;t++){const p=shuf([...Array(n).keys()]),g=[];for(let i=0;i+1<n;i+=2)g.push([p[i],p[i+1]]);if(n%2)g[g.length-1].push(p[n-1]);let s=0;g.forEach(x=>prs(x).forEach(([a,b])=>{if(met.has(a+'-'+b))s++}));if(s<bs){bs=s;best=g;if(!s)break}}
+best.forEach(x=>prs(x).forEach(([a,b])=>met.add(a+'-'+b)));return best}
+const step=(c,gs)=>{const n=new Set(c);gs.forEach(g=>{if(g.some(x=>c.has(x)))g.forEach(x=>n.add(x))});return n};
+function sim(g){let c=new Set([g]);S.rounds.forEach(r=>{c=step(c,r.groups)});return c.size===S.fin.size&&[...c].every(x=>S.fin.has(x))}
+function traceSets(t){const N=S.rounds.length,sets=Array(N+1);sets[N]=new Set([t]);for(let r=N;r>=1;r--){const s=new Set();S.rounds[r-1].groups.forEach(g=>{if(g.some(x=>sets[r].has(x)))g.forEach(x=>s.add(x))});sets[r-1]=s}return sets}
+function start(pr){const names=parseNames(cfg.names);if(names.length<4){cfg.err='Add at least 4 names.';rCtl();return}cfg.err='';
+const N=Math.max(1,Math.min(8,+cfg.nr||4)),p0=cfg.p0==='r'?Math.random()*names.length|0:+cfg.p0,met=new Set(),rounds=[];
+for(let r=0;r<N;r++)rounds.push({groups:mk(names.length,met)});
+S={names,rounds,stage:0,fin:null,draft:new Set(),target:null,out:new Set(),notes:{},hints:false,rev:false,tab:'trails',msg:'',p0,gs:0,cn:false};
+if(pr){let c=new Set([p0]);rounds.forEach(r=>{c=step(c,r.groups)});S.fin=c;S.draft=new Set(c);S.target=[...c][0]}
+render()}
+
+/* ---------- board (projector) ---------- */
+function rBoard(){const el=$('#board');
+if(!S.rounds){el.innerHTML=`<div class="hero"><div class="t">Outbreak Tracer</div><p>How does an infection spread, and can we work out where it began?</p></div>`;return}
+const N=S.rounds.length,s=S.stage,nm=S.names;
+if(S.fin){el.innerHTML=resView();return}
+if(s<N){const g=S.rounds[s].groups,f=g.length<=6?2.1:g.length<=12?1.7:1.35;
+el.innerHTML=`<div class="prog"><i style="width:${(s+1)/(N+1)*100}%"></i></div><div class="row"><h2 class="big">Round ${s+1} of ${N}</h2><span class="mut">Swap with your partner: pour half into theirs, then they pour half back.</span></div><div class="pairs" style="font-size:${f}em">`+g.map(x=>`<div class="pair">${x.map(i=>esc(nm[i])).join('<span class="arr">⇄</span>')}</div>`).join('')+'</div>';return}
+el.innerHTML=`<div class="prog"><i style="width:100%"></i></div><div class="hero"><h2 class="big" style="font-size:2.6em">Add indicator to your tube</h2><p>Does it change colour?</p><div><span class="pill i bigpill">Changed colour = infected</span><span class="pill bigpill">No change = clear</span></div></div>`}
+function resView(){const nm=S.names;
+let h=`<div class="sum"><b>${S.fin.size} of ${nm.length} infected</b><div class="bar"><i style="width:${Math.round(S.fin.size/nm.length*100)}%"></i></div>${S.rev?`<span>Patient zero: <span class="pill i">${esc(nm[S.p0])}</span></span>`:''}</div>`;
+if(S.msg)h+=`<p class="msg">${S.msg}</p>`;
+if(S.hints)h+=`<div class="panel"><ul style="margin:0"><li>Can anyone who ended up clear be patient zero? Why not?</li><li>Pick an infected student and trace back: who could have given it to them?</li><li>Who appears in everyone’s trace-back?</li><li>Pick a suspect and follow their trail. Does it explain every infected student?</li></ul></div>`;
+return h+(S.tab==='trails'?trails():S.tab==='trace'?traceUI():sus())}
+function trails(){const N=S.rounds.length,nm=S.names,fin=S.fin;
+let h=`<div class="trails" style="--n:${N};--rows:${nm.length+1}"><div class="tr th"><span>Student</span>`+S.rounds.map((_,r)=>`<span class="cell"><span class="rh">Round ${r+1}</span></span>`).join('')+'<span>Result</span></div>';
+nm.forEach((n,i)=>{h+=`<div class="tr ${S.target===i?'sel':''}"><span><button class="pill ${fin.has(i)?'i':''}" data-a="pick" data-v="${i}">${esc(n)}</button></span>`+S.rounds.map(rd=>{const g=rd.groups.find(x=>x.includes(i));return `<span class="cell">`+g.filter(x=>x!==i).map(x=>`<span class="pill ${fin.has(x)?'i':''}">${esc(nm[x])}</span>`).join('')+'</span>'}).join('')+`<span><b class="${fin.has(i)?'ri':'rcl'}">${fin.has(i)?'Infected':'Clear'}</b></span></div>`});
+return h+'</div>'}
+function traceUI(){const nm=S.names,fin=S.fin,N=S.rounds.length,t=S.target,sets=traceSets(t);
+const PW=112,mx=Math.max(...sets.map(s=>s.size)),H=58+mx*38,Wd=Math.max(170*N+PW+40,H*1.8),dx=(Wd-PW-40)/N,X=c=>20+PW/2+c*dx;
+const Y={};sets.forEach((s,c)=>[...s].sort((a,b)=>a-b).forEach((p,k)=>Y[c+'-'+p]=58+k*38));
+let e='',nd='',hd='';
+for(let r=1;r<=N;r++){const g=S.rounds[r-1].groups;sets[r].forEach(q=>{const gq=g.find(x=>x.includes(q));sets[r-1].forEach(p=>{if(gq.includes(p))e+=`<line class="eg" x1="${X(r-1)+PW/2}" y1="${Y[(r-1)+'-'+p]}" x2="${X(r)-PW/2}" y2="${Y[r+'-'+q]}"/>`})})}
+sets.forEach((s,c)=>{hd+=`<text class="hd" x="${X(c)}" y="26" text-anchor="middle">${c===0?'Start':c===N?'End':'After round '+c}</text>`;s.forEach(p=>{const i=fin.has(p);nd+=`<rect class="${i?'nI':'nC'}" x="${X(c)-PW/2}" y="${Y[c+'-'+p]-14}" width="${PW}" height="28" rx="14"/><text class="nt ${i?'tI':'tC'}" x="${X(c)}" y="${Y[c+'-'+p]+5}" text-anchor="middle">${esc(nm[p])}</text>`})});
+const inf=fin.has(t);
+return `<div class="panel"><div class="row"><b style="font-size:1.3em">Tracing back: ${esc(nm[t])}</b><span class="pill ${inf?'i':''}">${inf?'infected':'clear'} at the end</span><span class="mut">Lines join people who swapped. The left column is everyone who could have passed it on to ${esc(nm[t])}.</span></div><svg class="tsv" viewBox="0 0 ${Wd} ${H}" role="img" aria-label="Trace-back tree">${hd}${e}${nd}</svg><p><b>${inf?`${sets[0].size} possible sources.`:`${esc(nm[t])} is clear, so nobody in this web can be patient zero.`}</b></p></div>`}
+function sus(){const nm=S.names,left=nm.length-S.out.size;
+return `<p><b>${left}</b> of ${nm.length} still possible. Tap a name to rule them out, then say why.</p><div class="sus">`+nm.map((n,i)=>`<div class="${S.fin.has(i)?'inf':''} ${S.out.has(i)?'out':''}"><button data-a="out" data-v="${i}">${esc(n)}</button><input type="text" placeholder="Reason" value="${esc(S.notes[i]||'')}" data-n="${i}"></div>`).join('')+'</div>'}
+
+/* ---------- teacher panel ---------- */
+function p0opts(){const n=parseNames(cfg.names);if(cfg.p0!=='r'&&+cfg.p0>=n.length)cfg.p0='r';return `<option value="r" ${cfg.p0==='r'?'selected':''}>Random</option>`+n.map((x,i)=>`<option value="${i}" ${String(cfg.p0)===String(i)?'selected':''}>${esc(x)}</option>`).join('')}
+const connTxt=()=>Date.now()-lastPing<8000?'Board window connected ✓':'Board not detected. Open this page without #teacher on the projector.';
+function ctlHTML(){
+const top=ROLE==='teacher'?`<p class="mut" id="conn">${connTxt()}</p>`:'';
+if(!S.rounds)return top+`<h2>New session</h2><div class="field"><label for="names">Class list (one name per line)</label><textarea id="names">${esc(cfg.names)}</textarea></div><div class="row"><div class="field"><label for="nr">Rounds</label><input id="nr" type="number" min="1" max="8" value="${cfg.nr}" style="width:80px"></div><div class="field"><label for="p0">NaOH tube goes to</label><select id="p0">${p0opts()}</select></div></div>${cfg.err?`<p class="msg">${cfg.err}</p>`:''}<div class="row"><button class="pri" data-a="start" data-v="0">Start session</button><button data-a="start" data-v="1">Practice run</button></div><p class="mut">One starting case. Each swap shares the infection with both people. Odd classes get one group of three.</p>${ROLE==='board'?'<p class="mut">For a second monitor: press <b>Pop out</b> at the top of this panel, then drag that window onto the other screen. Both windows stay in sync.</p>':''}`;
+const nm=S.names,N=S.rounds.length,s=S.stage;
+let h=top+`<div class="panel">NaOH tube: <b>${esc(nm[S.p0])}</b></div>`;
+if(!S.fin){h+='<div class="steps">'+Array.from({length:N+1},(_,i)=>`<button class="${i===s?'on':''}" data-a="stage" data-v="${i}">${i<N?'R'+(i+1):'Indicator'}</button>`).join('')+'</div>';
+if(s<N)h+=`<h2>Round ${s+1} of ${N}</h2><div class="row">${s>0?'<button data-a="back">Back</button>':''}<button class="ghost" data-a="resh">Reshuffle</button><button class="pri" data-a="next">${s<N-1?'Next round':'Add indicator'}</button></div>`;
+else h+=`<h2>Record results</h2><p class="mut">Tap each student whose tube changed colour.</p><div class="grid">`+nm.map((n,i)=>`<button class="st ${S.draft.has(i)?'inf':''}" data-a="tog" data-v="${i}">${esc(n)}</button>`).join('')+`</div><p class="mut" id="cnt">${S.draft.size} of ${nm.length} infected</p><div class="row"><button data-a="back">Back</button><button class="pri" id="fin" data-a="finish" ${S.draft.size?'':'disabled'}>Show results</button></div>`}
+else{const c=nm.map((_,i)=>i).filter(sim).length;
+h+=`<h2>Board view</h2><div class="steps">`+[['trails','Trails'],['trace','Trace back'],['sus','Suspects']].map(([a,b])=>`<button class="${S.tab===a?'on':''}" data-a="tab" data-v="${a}">${b}</button>`).join('')+'</div>';
+if(S.tab==='trace'){h+=`<div class="row"><label for="tg">Student</label><select id="tg" style="width:auto">${nm.map((n,i)=>`<option value="${i}" ${i===S.target?'selected':''}>${esc(n)}</option>`).join('')}</select></div>`;if(!S.fin.has(S.target))h+='<p><button data-a="ruleout">Rule out everyone in this trace</button></p>'}
+h+=`<div class="row" style="margin:8px 0"><button class="${S.hints?'pri':''}" data-a="hints">${S.hints?'Hide':'Show'} hints</button><button class="${S.rev?'pri':''}" data-a="rev">${S.rev?'Hide':'Reveal'} patient zero</button></div>`;
+h+=`<div class="panel"><b>Data check</b><br>${c===0?'⚠ No single starting student fits. A swap or test result was probably recorded wrongly.':c===1?'Exactly one student fits.':c+' students fit the results.'}</div>`;
+h+=`<div class="panel"><b>Test a guess</b><div class="row"><select id="gs" style="width:auto">${nm.map((n,i)=>`<option value="${i}" ${i===S.gs?'selected':''}>${esc(n)}</option>`).join('')}</select><button data-a="chk">Check</button></div></div><button data-a="rerec">Re-record results</button>`}
+h+=S.cn?`<p style="margin-top:14px"><b>Clear this session?</b> <button data-a="newyes">Yes</button> <button data-a="newno">No</button></p>`:`<p style="margin-top:14px"><button class="ghost" data-a="newq">New session</button></p>`;
+return h}
+function rCtl(){if(ROLE==='board'&&$('#ctl').hidden)return;$('#croot').innerHTML=ctlHTML()}
+function render(){if(ROLE==='teacher'){rCtl();sync()}else{rBoard();rCtl()}}
+function openPanel(){$('#ctl').hidden=false;rCtl()}
+(function(){const b=$('#ctl'),h=b.querySelector('.ctlh');let o=null;
+h.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;const r=b.getBoundingClientRect();o=[e.clientX-r.left,e.clientY-r.top];try{h.setPointerCapture(e.pointerId)}catch(x){}});
+h.addEventListener('pointermove',e=>{if(!o)return;b.style.left=Math.max(0,e.clientX-o[0])+'px';b.style.top=Math.max(0,e.clientY-o[1])+'px';b.style.right='auto'});
+h.addEventListener('pointerup',()=>{o=null})})();
+
+/* ---------- pop the teacher panel out to its own window ---------- */
+let popRef=null;
+async function popOut(){
+if(popRef&&!popRef.closed){popRef.focus();return}
+const url=location.href.split('#')[0]+'#teacher';
+popRef=window.open(url,'ot_teacher','popup,width=480,height=820');
+if(!popRef){alert('The popup was blocked. Allow popups for this page, then press Pop out again.');return}
+try{if(window.getScreenDetails){const d=await getScreenDetails(),o=d.screens.find(x=>x!==d.currentScreen);
+if(o){popRef.moveTo(o.availLeft+40,o.availTop+40);popRef.focus()}}}catch(e){}}
+
+/* ---------- events ---------- */
+const H={start:v=>start(v==='1'),
+stage:v=>{S.stage=+v;render()},next:()=>{S.stage++;render()},back:()=>{S.stage--;render()},resh:()=>{const met=new Set();S.rounds.forEach((x,i)=>{if(i<S.stage)x.groups.forEach(g=>prs(g).forEach(([a,b])=>met.add(a+'-'+b)))});S.rounds[S.stage].groups=mk(S.names.length,met);render()},
+tog:(v,el)=>{v=+v;const on=!S.draft.has(v);on?S.draft.add(v):S.draft.delete(v);el.classList.toggle('inf',on);$('#cnt').textContent=`${S.draft.size} of ${S.names.length} infected`;$('#fin').disabled=!S.draft.size;if(ROLE==='teacher')sync()},
+finish:()=>{S.fin=new Set(S.draft);S.target=[...S.fin][0];S.msg='';S.tab='trails';render()},
+tab:v=>{S.tab=v;render()},hints:()=>{S.hints=!S.hints;render()},rev:()=>{S.rev=!S.rev;render()},
+chk:()=>{S.msg=`${esc(S.names[S.gs])}: `+(sim(S.gs)?'✅ consistent with the results (others might be too).':'❌ that doesn’t produce the final result.');render()},
+pick:v=>{S.target=+v;S.tab='trace';render()},ruleout:()=>{traceSets(S.target)[0].forEach(x=>S.out.add(x));S.tab='sus';render()},
+out:v=>{v=+v;S.out.has(v)?S.out.delete(v):S.out.add(v);render()},rerec:()=>{S.fin=null;S.stage=S.rounds.length;S.msg='';render()},
+newq:()=>{S.cn=true;rCtl()},newno:()=>{S.cn=false;rCtl()},newyes:()=>{S={};render()}};
+document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(!t)return;const a=t.dataset.a,v=t.dataset.v;
+if(a==='panel'){openPanel();return}if(a==='popout'){popOut();return}if(a==='hidectl'){$('#ctl').hidden=true;return}
+if(ROLE==='board'&&mirror){if(a==='pick'||a==='out')send({type:'act',a,v});return}
+if(H[a])H[a](v,t)});
+document.addEventListener('input',e=>{const t=e.target;if(t.id==='names'){cfg.names=t.value;$('#p0').innerHTML=p0opts()}else if(t.id==='nr')cfg.nr=t.value;
+else if(t.dataset.n!==undefined){if(ROLE==='board'&&mirror)send({type:'note',i:t.dataset.n,val:t.value});else S.notes[t.dataset.n]=t.value}});
+document.addEventListener('change',e=>{const t=e.target;if(t.id==='tg'){S.target=+t.value;render()}else if(t.id==='p0')cfg.p0=t.value;else if(t.id==='gs')S.gs=+t.value});
+
+/* ---------- boot ---------- */
+if(ROLE==='teacher'){document.body.classList.add('teacher');$('#ctl').hidden=false;
+try{const sv=JSON.parse(localStorage.getItem('ot_save')||'null');if(sv&&Date.now()-sv.t<4*3600e3){S=deser(sv.s);cfg={...cfg,...sv.cfg,err:''}}}catch(e){}
+setInterval(()=>{const c=$('#conn');if(c)c.textContent=connTxt()},2000);addEventListener('pagehide',()=>send({type:'bye'}));send({type:'hello'});render()}
+else{send({type:'hello'});setInterval(()=>send({type:'ping'}),3000);render()}
+</script></body></html>
